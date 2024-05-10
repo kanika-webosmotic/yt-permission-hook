@@ -1,117 +1,63 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
+import React, {useState} from 'react';
+import {View, Button, Image, StyleSheet} from 'react-native';
+import usePermission from './src/hooks/usePermission';
+import {RESULTS} from 'react-native-permissions';
+import {launchCamera, MediaType} from 'react-native-image-picker';
+import {permission} from './src/utils/permissions';
 
-import React from 'react';
-import type {PropsWithChildren} from 'react';
-import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
+const App = () => {
+  const [imageUrl, setImageUrl] = useState('');
+  const {checkAndRequestPermission} = usePermission(permission.camera);
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+  const handleImagePicker = async () => {
+    const options = {
+      saveToPhotos: false,
+      mediaType: 'photo' as MediaType,
+    };
+    const image = await launchCamera(options, response => {
+      if (response.didCancel) {
+      } else {
+        return response?.assets?.[0]?.uri;
+      }
+    });
+    const imageUri = image?.assets?.[0]?.uri;
+    if (imageUri) {
+      setImageUrl(imageUri);
+    }
+  };
 
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
-
-function Section({children, title}: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-}
-
-function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
+  const captureImage = async () => {
+    const status = await checkAndRequestPermission();
+    if (status === RESULTS.GRANTED) {
+      handleImagePicker();
+    }
   };
 
   return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+    <View style={styles.centeredContent}>
+      {imageUrl ? (
+        <Image source={{uri: imageUrl}} style={styles.selectedImage} />
+      ) : null}
+      <Button title="Select Image" onPress={captureImage} />
+    </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
+  centeredContent: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    flex: 1,
   },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
+  selectedImage: {
+    marginBottom: 20,
+    height: 300,
+    width: 300,
+    borderRadius: 16,
   },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
+  pemissionStatusText: {
+    fontSize: 16,
+    marginTop: 20,
   },
 });
 
